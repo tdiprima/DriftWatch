@@ -68,6 +68,25 @@ Running Services:
 | `diff`     | Compare current state to baseline     |
 | `version`  | Print version information             |
 
+## Project Structure
+
+```
+driftwatch/
+├── cmd/driftwatch/
+│   └── main.go              CLI entry point
+├── internal/
+│   ├── scanner/
+│   │   ├── host.go           Hostname, OS, kernel
+│   │   ├── disk.go           Filesystem usage
+│   │   ├── ports.go          Listening ports
+│   │   ├── users.go          Local user accounts
+│   │   └── services.go       Running systemd services
+│   └── snapshot/
+│       └── snapshot.go       Combines all scanners into one Snapshot struct
+├── go.mod
+└── README.md
+```
+
 ## Install (optional)
 
 Copy the binary somewhere on your `PATH`:

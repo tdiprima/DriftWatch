@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tdiprima/driftwatch/internal/scanner"
+	"github.com/tdiprima/driftwatch/internal/snapshot"
 )
 
 const version = "0.1.0"
@@ -36,54 +36,38 @@ func main() {
 func runScan() {
 	fmt.Printf("DriftWatch v%s\n\n", version)
 
-	host, err := scanner.ScanHost()
+	snap, err := snapshot.Capture()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error: %v\n", err)
 		os.Exit(1)
 	}
 
-	fmt.Printf("Host:   %s\n", host.Hostname)
-	fmt.Printf("OS:     %s\n", host.OS)
-	fmt.Printf("Kernel: %s\n", host.Kernel)
+	printSnapshot(snap)
+}
 
-	disks, err := scanner.ScanDisks()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: disk scan failed: %v\n", err)
-	} else {
-		fmt.Println("\nDisk Usage:")
-		for _, disk := range disks {
-			fmt.Printf("  %-20s %d%%\n", disk.MountPoint, disk.UsagePercent)
-		}
+func printSnapshot(snap snapshot.Snapshot) {
+	fmt.Printf("Host:   %s\n", snap.Host.Hostname)
+	fmt.Printf("OS:     %s\n", snap.Host.OS)
+	fmt.Printf("Kernel: %s\n", snap.Host.Kernel)
+
+	fmt.Println("\nDisk Usage:")
+	for _, disk := range snap.Disks {
+		fmt.Printf("  %-20s %d%%\n", disk.MountPoint, disk.UsagePercent)
 	}
 
-	ports, err := scanner.ScanPorts()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: port scan failed: %v\n", err)
-	} else {
-		fmt.Println("\nListening Ports:")
-		for _, port := range ports {
-			fmt.Printf("  %s (%s)\n", port.Address, port.Protocol)
-		}
+	fmt.Println("\nListening Ports:")
+	for _, port := range snap.Ports {
+		fmt.Printf("  %s (%s)\n", port.Address, port.Protocol)
 	}
 
-	users, err := scanner.ScanUsers()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: user scan failed: %v\n", err)
-	} else {
-		fmt.Println("\nLocal Users:")
-		for _, user := range users {
-			fmt.Printf("  %s (uid %d)\n", user.Username, user.UID)
-		}
+	fmt.Println("\nLocal Users:")
+	for _, user := range snap.Users {
+		fmt.Printf("  %s (uid %d)\n", user.Username, user.UID)
 	}
 
-	services, err := scanner.ScanServices()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: service scan failed: %v\n", err)
-	} else {
-		fmt.Println("\nRunning Services:")
-		for _, svc := range services {
-			fmt.Printf("  %s\n", svc.Name)
-		}
+	fmt.Println("\nRunning Services:")
+	for _, svc := range snap.Services {
+		fmt.Printf("  %s\n", svc.Name)
 	}
 }
 
