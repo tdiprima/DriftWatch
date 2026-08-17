@@ -18,6 +18,7 @@ go build -o driftwatch ./cmd/driftwatch/
 ```bash
 ./driftwatch version
 ./driftwatch scan
+./driftwatch baseline
 ```
 
 ### Example output
@@ -82,10 +83,14 @@ driftwatch/
 │   │   ├── users.go          Local user accounts
 │   │   └── services.go       Running systemd services
 │   └── snapshot/
-│       └── snapshot.go       Combines all scanners into one Snapshot struct
+│       └── snapshot.go       Snapshot struct, Capture(), Save(), LoadBaseline()
 ├── go.mod
 └── README.md
 ```
+
+## Data Storage
+
+Baseline saved as JSON at `~/.driftwatch/baseline.json`. Running `baseline` again overwrites it.
 
 ## Install (optional)
 

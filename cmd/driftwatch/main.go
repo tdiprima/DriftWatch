@@ -24,8 +24,7 @@ func main() {
 		fmt.Println("diff: not yet implemented")
 		os.Exit(1)
 	case "baseline":
-		fmt.Println("baseline: not yet implemented")
-		os.Exit(1)
+		runBaseline()
 	default:
 		fmt.Fprintf(os.Stderr, "unknown command: %s\n\n", os.Args[1])
 		printUsage()
@@ -43,6 +42,25 @@ func runScan() {
 	}
 
 	printSnapshot(snap)
+}
+
+func runBaseline() {
+	fmt.Printf("DriftWatch v%s\n\n", version)
+	fmt.Println("Creating baseline...")
+
+	snap, err := snapshot.Capture()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	path, err := snapshot.Save(snap)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("\nBaseline saved: %s\n", path)
 }
 
 func printSnapshot(snap snapshot.Snapshot) {
