@@ -42,9 +42,49 @@ func runScan() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Host: %s\n", host.Hostname)
-	fmt.Printf("OS:   %s\n", host.OS)
+	fmt.Printf("Host:   %s\n", host.Hostname)
+	fmt.Printf("OS:     %s\n", host.OS)
 	fmt.Printf("Kernel: %s\n", host.Kernel)
+
+	disks, err := scanner.ScanDisks()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: disk scan failed: %v\n", err)
+	} else {
+		fmt.Println("\nDisk Usage:")
+		for _, disk := range disks {
+			fmt.Printf("  %-20s %d%%\n", disk.MountPoint, disk.UsagePercent)
+		}
+	}
+
+	ports, err := scanner.ScanPorts()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: port scan failed: %v\n", err)
+	} else {
+		fmt.Println("\nListening Ports:")
+		for _, port := range ports {
+			fmt.Printf("  %s (%s)\n", port.Address, port.Protocol)
+		}
+	}
+
+	users, err := scanner.ScanUsers()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: user scan failed: %v\n", err)
+	} else {
+		fmt.Println("\nLocal Users:")
+		for _, user := range users {
+			fmt.Printf("  %s (uid %d)\n", user.Username, user.UID)
+		}
+	}
+
+	services, err := scanner.ScanServices()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "warning: service scan failed: %v\n", err)
+	} else {
+		fmt.Println("\nRunning Services:")
+		for _, svc := range services {
+			fmt.Printf("  %s\n", svc.Name)
+		}
+	}
 }
 
 func printUsage() {

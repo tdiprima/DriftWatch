@@ -26,10 +26,38 @@ go build -o driftwatch ./cmd/driftwatch/
 $ ./driftwatch scan
 DriftWatch v0.1.0
 
-Host: vulcan
-OS:   Ubuntu 24.04.2 LTS
+Host:   vulcan
+OS:     Ubuntu 24.04.2 LTS
 Kernel: 6.8.0-49-generic
+
+Disk Usage:
+  /                    63%
+  /home                41%
+
+Listening Ports:
+  0.0.0.0:22 (tcp)
+  0.0.0.0:443 (tcp)
+  0.0.0.0:9100 (tcp)
+
+Local Users:
+  root (uid 0)
+  alex (uid 1000)
+
+Running Services:
+  sshd.service
+  nginx.service
+  chronyd.service
 ```
+
+### What gets scanned
+
+| Check     | Source                       |
+|-----------|------------------------------|
+| Host info | `hostname`, `/etc/os-release`, `uname -r` |
+| Disk      | `df`                         |
+| Ports     | `ss -tuln`                   |
+| Users     | `/etc/passwd` (UID >= 1000 + root) |
+| Services  | `systemctl list-units`       |
 
 ## Commands
 
