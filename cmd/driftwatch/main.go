@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/tdiprima/driftwatch/internal/scanner"
 )
 
 const version = "0.1.0"
@@ -17,8 +19,7 @@ func main() {
 	case "version":
 		fmt.Printf("DriftWatch v%s\n", version)
 	case "scan":
-		fmt.Println("scan: not yet implemented")
-		os.Exit(1)
+		runScan()
 	case "diff":
 		fmt.Println("diff: not yet implemented")
 		os.Exit(1)
@@ -30,6 +31,20 @@ func main() {
 		printUsage()
 		os.Exit(1)
 	}
+}
+
+func runScan() {
+	fmt.Printf("DriftWatch v%s\n\n", version)
+
+	host, err := scanner.ScanHost()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	fmt.Printf("Host: %s\n", host.Hostname)
+	fmt.Printf("OS:   %s\n", host.OS)
+	fmt.Printf("Kernel: %s\n", host.Kernel)
 }
 
 func printUsage() {
