@@ -17,6 +17,18 @@ go build -o driftwatch ./cmd/driftwatch/
 
 ```bash
 ./driftwatch version
+./driftwatch scan
+```
+
+### Example output
+
+```
+$ ./driftwatch scan
+DriftWatch v0.1.0
+
+Host: vulcan
+OS:   Ubuntu 24.04.2 LTS
+Kernel: 6.8.0-49-generic
 ```
 
 ## Commands
