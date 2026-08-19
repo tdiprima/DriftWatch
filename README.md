@@ -19,6 +19,7 @@ go build -o driftwatch ./cmd/driftwatch/
 ./driftwatch version
 ./driftwatch scan
 ./driftwatch baseline
+./driftwatch diff
 ```
 
 ### Example output
@@ -48,6 +49,36 @@ Running Services:
   sshd.service
   nginx.service
   chronyd.service
+```
+
+### Example diff output
+
+```
+$ ./driftwatch diff
+DriftWatch — Changes detected
+
++ NEW Listening Port
+  0.0.0.0:8080 (tcp)
+
++ NEW User
+  backupsvc
+
+- Service REMOVED
+  nginx.service
+
+~ Disk CHANGE
+  /: 63% -> 74%
+
+4 change(s) detected.
+```
+
+When nothing changed:
+
+```
+$ ./driftwatch diff
+DriftWatch — No drift detected.
+
+System matches baseline.
 ```
 
 ### What gets scanned
@@ -82,8 +113,10 @@ driftwatch/
 │   │   ├── ports.go          Listening ports
 │   │   ├── users.go          Local user accounts
 │   │   └── services.go       Running systemd services
-│   └── snapshot/
-│       └── snapshot.go       Snapshot struct, Capture(), Save(), LoadBaseline()
+│   ├── snapshot/
+│   │   └── snapshot.go       Snapshot struct, Capture(), Save(), LoadBaseline()
+│   └── diff/
+│       └── diff.go           Compare two snapshots, produce list of changes
 ├── go.mod
 └── README.md
 ```

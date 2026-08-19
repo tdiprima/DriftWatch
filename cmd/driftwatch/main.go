@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/tdiprima/driftwatch/internal/diff"
 	"github.com/tdiprima/driftwatch/internal/snapshot"
 )
 
@@ -21,8 +22,7 @@ func main() {
 	case "scan":
 		runScan()
 	case "diff":
-		fmt.Println("diff: not yet implemented")
-		os.Exit(1)
+		runDiff()
 	case "baseline":
 		runBaseline()
 	default:
@@ -42,6 +42,49 @@ func runScan() {
 	}
 
 	printSnapshot(snap)
+}
+
+func runDiff() {
+	baseline, err := snapshot.LoadBaseline()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		fmt.Fprintln(os.Stderr, "Run 'driftwatch baseline' first to create a baseline.")
+		os.Exit(1)
+	}
+
+	current, err := snapshot.Capture()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error: %v\n", err)
+		os.Exit(1)
+	}
+
+	result := diff.Compare(baseline, current)
+
+	if result.Count() == 0 {
+		fmt.Println("DriftWatch — No drift detected.")
+		fmt.Println("")
+		fmt.Println("System matches baseline.")
+		return
+	}
+
+	fmt.Println("DriftWatch — Changes detected")
+	fmt.Println("")
+
+	for _, change := range result.Changes {
+		switch change.Type {
+		case "added":
+			fmt.Printf("+ NEW %s\n", change.Category)
+			fmt.Printf("  %s\n\n", change.Detail)
+		case "removed":
+			fmt.Printf("- %s REMOVED\n", change.Category)
+			fmt.Printf("  %s\n\n", change.Detail)
+		case "changed":
+			fmt.Printf("~ %s CHANGE\n", change.Category)
+			fmt.Printf("  %s\n\n", change.Detail)
+		}
+	}
+
+	fmt.Printf("%d change(s) detected.\n", result.Count())
 }
 
 func runBaseline() {
