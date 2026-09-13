@@ -24,12 +24,37 @@ func (r Result) Count() int {
 func Compare(baseline, current snapshot.Snapshot) Result {
 	var result Result
 
+	diffHost(baseline.Host, current.Host, &result)
 	diffPorts(baseline.Ports, current.Ports, &result)
 	diffUsers(baseline.Users, current.Users, &result)
 	diffServices(baseline.Services, current.Services, &result)
 	diffDisks(baseline.Disks, current.Disks, &result)
 
 	return result
+}
+
+func diffHost(old, new scanner.HostInfo, result *Result) {
+	if old.Hostname != new.Hostname {
+		result.Changes = append(result.Changes, Change{
+			Category: "Host",
+			Type:     "changed",
+			Detail:   fmt.Sprintf("hostname: %s -> %s", old.Hostname, new.Hostname),
+		})
+	}
+	if old.OS != new.OS {
+		result.Changes = append(result.Changes, Change{
+			Category: "Host",
+			Type:     "changed",
+			Detail:   fmt.Sprintf("OS: %s -> %s", old.OS, new.OS),
+		})
+	}
+	if old.Kernel != new.Kernel {
+		result.Changes = append(result.Changes, Change{
+			Category: "Host",
+			Type:     "changed",
+			Detail:   fmt.Sprintf("kernel: %s -> %s", old.Kernel, new.Kernel),
+		})
+	}
 }
 
 func diffPorts(old, new []scanner.PortInfo, result *Result) {
@@ -71,9 +96,9 @@ func portKey(port scanner.PortInfo) string {
 }
 
 func diffUsers(old, new []scanner.UserInfo, result *Result) {
-	oldSet := make(map[string]bool)
+	oldMap := make(map[string]scanner.UserInfo)
 	for _, user := range old {
-		oldSet[user.Username] = true
+		oldMap[user.Username] = user
 	}
 
 	newSet := make(map[string]bool)
@@ -82,11 +107,20 @@ func diffUsers(old, new []scanner.UserInfo, result *Result) {
 	}
 
 	for _, user := range new {
-		if !oldSet[user.Username] {
+		oldUser, existed := oldMap[user.Username]
+		if !existed {
 			result.Changes = append(result.Changes, Change{
 				Category: "User",
 				Type:     "added",
 				Detail:   user.Username,
+			})
+			continue
+		}
+		if oldUser.UID != user.UID {
+			result.Changes = append(result.Changes, Change{
+				Category: "User",
+				Type:     "changed",
+				Detail:   fmt.Sprintf("%s uid: %d -> %d", user.Username, oldUser.UID, user.UID),
 			})
 		}
 	}

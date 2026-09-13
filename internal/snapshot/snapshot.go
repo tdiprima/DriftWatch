@@ -3,6 +3,7 @@ package snapshot
 import (
 	"encoding/json"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"time"
@@ -13,11 +14,11 @@ import (
 const baselineFileName = "baseline.json"
 
 type Snapshot struct {
-	Timestamp time.Time            `json:"timestamp"`
-	Host      scanner.HostInfo     `json:"host"`
-	Disks     []scanner.DiskInfo   `json:"disks"`
-	Ports     []scanner.PortInfo   `json:"ports"`
-	Users     []scanner.UserInfo   `json:"users"`
+	Timestamp time.Time             `json:"timestamp"`
+	Host      scanner.HostInfo      `json:"host"`
+	Disks     []scanner.DiskInfo    `json:"disks"`
+	Ports     []scanner.PortInfo    `json:"ports"`
+	Users     []scanner.UserInfo    `json:"users"`
 	Services  []scanner.ServiceInfo `json:"services"`
 }
 
@@ -84,11 +85,49 @@ func Save(snap Snapshot) (string, error) {
 		return "", fmt.Errorf("marshaling snapshot: %w", err)
 	}
 
-	if err := os.WriteFile(path, data, 0600); err != nil {
+	if err := writeFileAtomic(path, data, 0600); err != nil {
 		return "", fmt.Errorf("writing baseline: %w", err)
 	}
 
 	return path, nil
+}
+
+func writeFileAtomic(path string, data []byte, perm fs.FileMode) error {
+	dir := filepath.Dir(path)
+	tempFile, err := os.CreateTemp(dir, filepath.Base(path)+".*.tmp")
+	if err != nil {
+		return fmt.Errorf("creating temporary file: %w", err)
+	}
+
+	tempPath := tempFile.Name()
+	cleanupTemp := true
+	defer func() {
+		if cleanupTemp {
+			_ = os.Remove(tempPath)
+		}
+	}()
+
+	if err := tempFile.Chmod(perm); err != nil {
+		_ = tempFile.Close()
+		return fmt.Errorf("setting temporary file permissions: %w", err)
+	}
+	if _, err := tempFile.Write(data); err != nil {
+		_ = tempFile.Close()
+		return fmt.Errorf("writing temporary file: %w", err)
+	}
+	if err := tempFile.Sync(); err != nil {
+		_ = tempFile.Close()
+		return fmt.Errorf("syncing temporary file: %w", err)
+	}
+	if err := tempFile.Close(); err != nil {
+		return fmt.Errorf("closing temporary file: %w", err)
+	}
+	if err := os.Rename(tempPath, path); err != nil {
+		return fmt.Errorf("replacing file: %w", err)
+	}
+
+	cleanupTemp = false
+	return nil
 }
 
 func LoadBaseline() (Snapshot, error) {
